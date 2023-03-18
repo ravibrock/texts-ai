@@ -9,7 +9,7 @@ import math
 
 
 def preprocess_function(training_data):
-    tokenizer = AutoTokenizer.from_pretrained("gpt2")
+    tokenizer = AutoTokenizer.from_pretrained("microsoft/DialoGPT-large", padding_side="left")
 
     return tokenizer([" ".join(x) for x in training_data["text"]], truncation=True)
 
@@ -42,10 +42,10 @@ def group_texts(examples):
 def train(model, data_collator, train_dataset, val_dataset):
     training_args = TrainingArguments(
         evaluation_strategy="epoch",
-        num_train_epochs=5,
+        num_train_epochs=3,
         learning_rate=2e-5,
         weight_decay=0.01,
-        output_dir="./.output",
+        output_dir="./model",
         logging_dir="./.logs",
         logging_steps=10,
     )
@@ -67,21 +67,21 @@ def fine_tune(tokenizer, model, data_collator, training):
 
     trainer = train(model, data_collator, lm_replies["train"], lm_replies["test"])
     trainer.train()
-    print(f"Perplexity: {math.exp(trainer.evaluate()['eval_loss']):.2f}")
-
     trainer.save_model("./model")
     tokenizer.save_pretrained("./model")
 
+    print(f"Perplexity: {math.exp(trainer.evaluate()['eval_loss']):.2f}")
+
 
 def main():
-    replies = get_messages(return_messages=False, return_replies=True)
-    replies = replies.train_test_split(test_size=0.1)
+    messages = get_messages()
+    messages = messages.train_test_split(test_size=0.2)
 
-    tokenizer = AutoTokenizer.from_pretrained("gpt2")
-    model = AutoModelForCausalLM.from_pretrained("gpt2")
+    tokenizer = AutoTokenizer.from_pretrained("microsoft/DialoGPT-large")
+    model = AutoModelForCausalLM.from_pretrained("microsoft/DialoGPT-large")
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
-    fine_tune(tokenizer, model, data_collator, replies)
+    fine_tune(tokenizer, model, data_collator, messages)
 
 
 if __name__ == "__main__":
