@@ -1,5 +1,6 @@
 from datasets import Dataset
 import os.path
+import re
 import sqlite3
 
 
@@ -11,6 +12,11 @@ def create_connection(db_file):
         print(e)
 
     return conn
+
+
+def regexp(expr, item):
+    reg = re.compile(expr)
+    return reg.search(item) is not None
 
 
 def query(conn, sql):
@@ -25,36 +31,50 @@ def list2dataset(dataset):
     return Dataset.from_list([{"text": x} for x in dataset])
 
 
-def get_messages(return_messages, return_replies):
+def slice_by_sender(data):
+    # Slices data into threads
+    new_data = []
+    temp_new_data = []
+    for row in range(len(data) - 1):
+        if data[row][0] == data[row + 1][0]:
+            temp_new_data.append(data[row])
+        else:
+            new_data.append(temp_new_data)
+            temp_new_data = []
+
+    # Filters messages so I'm always replying and trims each thread to 10 messages/reply pairs
+    data = []
+    for row in range(len(new_data)):
+        if new_data[row]:
+            if new_data[row][0][1] == 1:
+                new_data[row].pop(0)
+        if len(new_data[row]) >= 20:
+            data.append(new_data[row][:(len(new_data[row]) - (len(new_data[row]) % 20))])
+
+    # Extracts text from tuples
+    for row in range(len(data)):
+        for row2 in range(len(data[row])):
+            data[row][row2] = data[row][row2][3]
+
+    # Slices each thread into 20-message chunks
+    new_data = []
+    for row in range(len(data)):
+        new_data_slice = [data[row][x:x + 20] for x in range(0, len(data[row]), 20)]
+        for row2 in new_data_slice:
+            new_data.append(row2)
+
+    # Joins each list of message/reply pairs into a string with <|endoftext|> special tokens
+    data = list(map("<|endoftext|>".join, new_data))
+
+    return data
+
+
+def get_messages():
     db_file = os.path.expanduser("~/Library/Messages/chat.db")
     conn = create_connection(db_file)
-    sql = "SELECT b.text AS msg, a.text AS reply " \
-          "FROM main.message AS a, main.message AS b " \
-          "WHERE a.reply_to_guid = b.guid " \
-          "AND a.is_from_me IS 1 " \
-          "AND b.is_from_me IS NOT 1 " \
-          "AND a.text <> '' " \
-          "AND b.text <> '' " \
-          "AND a.is_delivered IS 1 " \
-          "AND b.is_delivered IS 1 " \
-          "AND a.balloon_bundle_id IS NULL " \
-          "AND b.balloon_bundle_id IS NULL " \
-          "AND a.cache_has_attachments IS 0 " \
-          "AND b.cache_has_attachments IS 0;"
+    conn.create_function("REGEXP", 2, regexp)
+    with open("query.sql", "r") as sql_file:
+        sql = sql_file.read().replace("\\n", "\n")
     rows = query(conn, sql)
 
-    messages = []
-    replies = []
-    for row in rows:
-        messages.append(row[0])
-        replies.append(row[1])
-
-    messages = list2dataset(messages)
-    replies = list2dataset(replies)
-
-    if return_messages and not return_replies:
-        return messages
-    if not return_messages and return_replies:
-        return replies
-    if return_messages and return_replies:
-        return messages, replies
+    return list2dataset(slice_by_sender(rows))
