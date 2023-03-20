@@ -79,16 +79,14 @@ def fine_tune(tokenizer, model, data_collator, training):
 
 
 # Main function
-def main():
-    messages = get_messages()
-    messages = messages.train_test_split(test_size=0.2)
-
-    tokenizer = AutoTokenizer.from_pretrained("microsoft/DialoGPT-large")
-    model = AutoModelForCausalLM.from_pretrained("microsoft/DialoGPT-large")
+def main(source):
+    tokenizer = AutoTokenizer.from_pretrained(source)
+    model = AutoModelForCausalLM.from_pretrained(source)
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+    messages = get_messages().train_test_split(test_size=0.2)
 
     fine_tune(tokenizer, model, data_collator, messages)
 
 
 if __name__ == "__main__":
-    main()
+    main(source="microsoft/DialoGPT-large")
