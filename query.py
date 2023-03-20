@@ -4,6 +4,13 @@ import re
 import sqlite3
 
 
+# Regex function for SQLite
+def regexp(expr, item):
+    reg = re.compile(expr)
+    return reg.search(item) is not None
+
+
+# Creates a connection to the database file
 def create_connection(db_file):
     conn = None
     try:
@@ -14,11 +21,7 @@ def create_connection(db_file):
     return conn
 
 
-def regexp(expr, item):
-    reg = re.compile(expr)
-    return reg.search(item) is not None
-
-
+# Queries the messages database
 def query(conn, sql):
     cur = conn.cursor()
     cur.execute(sql)
@@ -27,10 +30,12 @@ def query(conn, sql):
     return rows
 
 
+# Turns a list into a dataset dict
 def list2dataset(dataset):
     return Dataset.from_list([{"text": x} for x in dataset])
 
 
+# Processes the data into the right format
 def slice_by_sender(data):
     # Slices data into threads
     new_data = []
@@ -69,6 +74,7 @@ def slice_by_sender(data):
     return data
 
 
+# Gets the messages from the database
 def get_messages():
     db_file = os.path.expanduser("~/Library/Messages/chat.db")
     conn = create_connection(db_file)
