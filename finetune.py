@@ -49,8 +49,8 @@ def train(model, data_collator, train_dataset, val_dataset):
         num_train_epochs=1,
         learning_rate=2e-5,
         weight_decay=0.01,
-        output_dir="./.logs",
-        logging_dir="./.logs",
+        output_dir="./.output",
+        logging_dir="./.output",
         logging_steps=10,
     )
     trainer = Trainer(
