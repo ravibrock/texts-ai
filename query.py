@@ -49,29 +49,22 @@ def slice_by_sender(data):
 
     # Filters messages so I'm always replying and trims each thread to 10 messages/reply pairs
     data = []
+    seq_len = 20
     for row in range(len(new_data)):
         if new_data[row]:
             if new_data[row][0][1] == 1:
                 new_data[row].pop(0)
-        if len(new_data[row]) >= 20:
-            data.append(new_data[row][:(len(new_data[row]) - (len(new_data[row]) % 20))])
+        if len(new_data[row]) >= seq_len:
+            new_data[row] = [x[3] for x in new_data[row]]
+            data.append(new_data[row][:(len(new_data[row]) - (len(new_data[row]) % seq_len))])
 
-    # Extracts text from tuples
-    for row in range(len(data)):
-        for row2 in range(len(data[row])):
-            data[row][row2] = data[row][row2][3]
-
-    # Slices each thread into 20-message chunks
+    # Slices each thread into message pairs
     new_data = []
     for row in range(len(data)):
-        new_data_slice = [data[row][x:x + 20] for x in range(0, len(data[row]), 20)]
-        for row2 in new_data_slice:
-            new_data.append(row2)
+        new_data_slice = [data[row][x:x + seq_len] for x in range(0, len(data[row]), seq_len)]
+        new_data += new_data_slice
 
-    # Joins each list of message/reply pairs into a string with <|endoftext|> special tokens
-    data = list(map("<|endoftext|>".join, new_data))
-
-    return data
+    return list(map("<|endoftext|>".join, new_data))
 
 
 # Gets the messages from the database
@@ -81,6 +74,6 @@ def get_messages():
     conn.create_function("REGEXP", 2, regexp)
     with open("query.sql", "r") as sql_file:
         sql = sql_file.read().replace("\\n", "\n")
-    rows = query(conn, sql)
+    messages = query(conn, sql)
 
-    return list2dataset(slice_by_sender(rows))
+    return list2dataset(slice_by_sender(messages))
