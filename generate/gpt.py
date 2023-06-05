@@ -46,4 +46,4 @@ def main(source):
 
 
 if __name__ == "__main__":
-    main(source="./model")
+    main(source="../models/custom")
