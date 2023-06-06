@@ -1,5 +1,9 @@
 accelerate
 datasets
+fschat
+llama-cpp-python
+tiktoken
 torch
-git+https://github.com/abetlen/llama-cpp-python
+torchaudio
+torchvision
 git+https://github.com/huggingface/transformers
