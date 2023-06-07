@@ -1,4 +1,4 @@
-from datasets import Dataset
+import argparse
 import os.path
 import re
 import sqlite3
@@ -30,11 +30,6 @@ def query(conn, sql):
     return rows
 
 
-# Turns a list into a dataset dict
-def list2dataset(dataset):
-    return Dataset.from_list([{"text": x} for x in dataset])
-
-
 # Processes the data into the right format
 def slice_by_sender(data):
     # Slices data into threads
@@ -47,33 +42,35 @@ def slice_by_sender(data):
             new_data.append(temp_new_data)
             temp_new_data = []
 
-    # Filters messages so I'm always replying and trims each thread to 10 messages/reply pairs
+    # Filters messages so I'm always replying and joins into a single string
     data = []
-    seq_len = 20
+    # seq_len = 20
     for row in range(len(new_data)):
-        if new_data[row]:
+        if len(new_data[row]) > 0:
             if new_data[row][0][1] == 1:
                 new_data[row].pop(0)
-        if len(new_data[row]) >= seq_len:
-            new_data[row] = [x[3] for x in new_data[row]]
-            data.append(new_data[row][:(len(new_data[row]) - (len(new_data[row]) % seq_len))])
+            new_data[row] = [f"\n\nMESSAGE:\n{x[3]}" if x[1] == 0 else f"\n\nREPLY:\n{x[3]}" for x in new_data[row]]
+            data.append(new_data[row])
 
-    # Slices each thread into message pairs
-    new_data = []
-    for row in range(len(data)):
-        new_data_slice = [data[row][x:x + seq_len] for x in range(0, len(data[row]), seq_len)]
-        new_data += new_data_slice
-
-    return list(map("<|endoftext|>".join, new_data))
+    return "".join(list(map(" ".join, data)))[2:]
 
 
 # Gets the messages from the database
-def get_messages():
+def main():
     db_file = os.path.expanduser("~/Library/Messages/chat.db")
     conn = create_connection(db_file)
     conn.create_function("REGEXP", 2, regexp)
     with open("query.sql", "r") as sql_file:
         sql = sql_file.read().replace("\\n", "\n")
-    messages = query(conn, sql)
+    messages = slice_by_sender(query(conn, sql))
 
-    return list2dataset(slice_by_sender(messages))
+    parser = argparse.ArgumentParser("Query messages")
+    parser.add_argument("write_path", help="Path to write processed messages database to.", type=str)
+    file = os.path.expanduser(parser.parse_args().write_path)
+
+    with open(file, "w") as f:
+        f.write(messages)
+
+
+if __name__ == "__main__":
+    main()
