@@ -330,19 +330,19 @@ class GPT(nn.Module):
         return idx
 
 
-def generate(init_from="resume",  # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
-             out_dir="models/gpt",  # ignored if init_from is not 'resume'
-             start="What's the weather?",
-             num_samples=5,  # number of samples to draw
-             max_new_tokens=500,  # number of tokens generated in each sample
-             temperature=0.8,  # 1.0=no change, < 1.0=less random, > 1.0=more random, in predictions
-             top_k=200,  # retain only the top_k most likely tokens, clamp others to have 0 probability
-             seed=1337,
-             device="cpu",  # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1', etc.
-             dtype="bfloat16",  # 'float32' or 'bfloat16' or 'float16'
-             compile=False,  # use PyTorch 2.0 to compile the model to be faster
-             ):
-    start = f"MESSAGE:\n{start}\n\nREPLY:\n"
+def gen(prompt,
+        model="models/gpt",  # ignored if init_from is not 'resume'
+        init_from="resume",  # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
+        num_samples=1,  # number of samples to draw
+        max_new_tokens=500,  # number of tokens generated in each sample
+        temperature=0.8,  # 1.0=no change, < 1.0=less random, > 1.0=more random, in predictions
+        top_k=200,  # retain only the top_k most likely tokens, clamp others to have 0 probability
+        seed=1337,
+        device="cpu",  # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1', etc.
+        dtype="bfloat16",  # 'float32' or 'bfloat16' or 'float16'
+        compile=False,  # use PyTorch 2.0 to compile the model to be faster
+        ):
+    prompt = f"MESSAGE:\n{prompt}\n\nREPLY:\n"
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.backends.cuda.matmul.allow_tf32 = True  # allow tf32 on matmul
@@ -354,7 +354,7 @@ def generate(init_from="resume",  # either 'resume' (from an out_dir) or a gpt2 
     # model
     if init_from == "resume":
         # init from a model saved in a specific directory
-        ckpt_path = os.path.join(out_dir, "ckpt.pt")
+        ckpt_path = os.path.join(model, "ckpt.pt")
         checkpoint = torch.load(ckpt_path, map_location=device)
         gptconf = GPTConfig(**checkpoint["model_args"])
         model = GPT(gptconf)
@@ -395,10 +395,10 @@ def generate(init_from="resume",  # either 'resume' (from an out_dir) or a gpt2 
         decode = lambda l: enc.decode(l)
 
     # encode the beginning of the prompt
-    if start.startswith("FILE:"):
-        with open(start[5:], "r", encoding="utf-8") as f:
-            start = f.read()
-    start_ids = encode(start)
+    if prompt.startswith("FILE:"):
+        with open(prompt[5:], "r", encoding="utf-8") as f:
+            prompt = f.read()
+    start_ids = encode(prompt)
     x = (torch.tensor(start_ids, dtype=torch.long, device=device)[None, ...])
 
     # run generation
