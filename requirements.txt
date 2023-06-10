@@ -4,6 +4,4 @@ fschat
 llama-cpp-python
 tiktoken
 torch
-torchaudio
-torchvision
 git+https://github.com/huggingface/transformers
