@@ -6,7 +6,7 @@ Generates texts using an LLM fine-tuned on previous messages.
 ## Getting started
 1. Run `pip install -r requirements.txt`
 2. Follow instructions below to initialize a model if needed
-3. Run either `python3 texts_ai.py llama path/to/model.pth` or `python3 texts_ai.py gpt path/to/model/dir`
+3. Run `python3 texts_ai.py --help` for instructions
 
 ## Setting up language models
 Both *GPT*-type and *LLaMa*-type models are supported. I wrote the prompts and **query.py** to correspond with [Vicuna](https://huggingface.co/lmsys/vicuna-13b-delta-v1.1), for *LLaMa*-type models, and a custom [NanoGPT](https://github.com/karpathy/nanoGPT) for *GPT*-type models. Instructions to configure both of them are below, but the code should be hackable to work with a variety of models.
