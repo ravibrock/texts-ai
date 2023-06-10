@@ -70,7 +70,7 @@ def monitor(gen_function, model_path, db_file, sql):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("model_type", choices=["gpt", "llama"], help="type of model to use")
-    parser.add_argument("model_path", type=str, help="path/to/model.pt(h)")
+    parser.add_argument("model_path", type=str, help="path/to/model")
     args = parser.parse_args()
 
     if args.model_type == "gpt":
