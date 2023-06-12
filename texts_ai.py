@@ -45,13 +45,12 @@ def get_message(db_file, sql, delay):
             contact = messages[0][0]
             time.sleep(delay)
             messages = custom_sql.query(db_file, sql)
-            if transform_date(messages[0][2]) > start_time:
-                for message in messages:
-                    if transform_date(message[2]) > start_time:
-                        if message[0] == contact:
-                            msg.append(message[3])
-                    else:
-                        break
+            for message in messages:
+                if transform_date(message[2]) > start_time:
+                    if message[0] == contact:
+                        msg.append(message[3])
+                else:
+                    break
             msg.reverse()
             return contact, " ".join(msg)
         else:
@@ -72,7 +71,7 @@ def send_message(contact, message):
 
 
 def monitor(gen_function, model_path, db_file, sql, delay):
-    print("Monitoring...")
+    print("Monitoring... (Press Ctrl-C to exit)")
     while True:
         contact, message = get_message(db_file, sql, delay)
         multiprocessing.Process(target=dispatch_reply, args=(gen_function, model_path, contact, message)).start()

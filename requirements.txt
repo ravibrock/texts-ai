@@ -1,7 +1,7 @@
-accelerate
-datasets
-fschat
-llama-cpp-python
-tiktoken
-torch
-git+https://github.com/huggingface/transformers
+accelerate==0.20.3
+datasets==2.12.0
+fschat==0.2.3
+llama-cpp-python==0.1.62
+tiktoken==0.4.0
+torch==2.0.1
+git+https://github.com/huggingface/transformers@41a8fa4e14ae14405a69efc65bfc21c9daa71c1a

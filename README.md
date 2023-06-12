@@ -21,7 +21,7 @@ Both *GPT*-type and *LLaMa*-type models are supported. I wrote the prompts and *
 </details>
 <details><summary><b>Setting up Vicuna</b></summary>
 
-1. Run `brew install bash` (if on MacOS)
+1. Run `brew install bash`
 2. Download **llama.sh** from [this repo](https://github.com/shawwn/llama-dl)
 3. Modify **llama.sh** to only download 7B and then run it with homebrew's bash
 4. Convert to Tokenizer format using [this script](https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/convert_llama_weights_to_hf.py) and this command:
